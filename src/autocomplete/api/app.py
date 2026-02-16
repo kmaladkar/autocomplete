@@ -1,5 +1,6 @@
 """FastAPI app: /suggest with Redis trie, cache, and ML ranking; Prometheus metrics."""
 
+import json
 import os
 import time
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 import pandas as pd
 import redis
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import RedirectResponse
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from starlette.responses import Response
@@ -38,6 +40,18 @@ app = FastAPI(
     description="ML-ranked suggestions with Redis trie and cache",
     version="0.1.0",
 )
+
+
+@app.exception_handler(RequestValidationError)
+def validation_exception_handler(request, exc: RequestValidationError):
+    """Return a clear message when query/body validation fails (e.g. missing q)."""
+    errors = exc.errors()
+    messages = [f"{'.'.join(str(l) for l in e['loc'])}: {e['msg']}" for e in errors]
+    return Response(
+        content='{"detail": ' + json.dumps(messages) + '}',
+        status_code=422,
+        media_type="application/json",
+    )
 
 _redis: redis.Redis | None = None
 _trie: RedisTrie | None = None
@@ -124,11 +138,13 @@ def metrics() -> Response:
 
 @app.get("/suggest")
 def suggest(
-    q: str = Query(..., min_length=1, description="Search prefix"),
-    limit: int = Query(10, ge=1, le=20),
+    q: str = Query(..., min_length=1, example="wea", description="Search prefix (e.g. wea, pyt)"),
+    limit: int = Query(10, ge=1, le=20, example=5, description="Max suggestions to return"),
 ) -> dict:
-    """Return ML-ranked autocomplete suggestions. Uses Redis cache (hot) or trie + model (cold)."""
-    prefix = q.strip().lower()
+    """Return ML-ranked autocomplete suggestions. Uses Redis cache (hot) or trie + model (cold). Call as GET with query params only, e.g. /suggest?q=wea&limit=5."""
+    prefix = (q or "").strip().lower()
+    if not prefix:
+        raise HTTPException(status_code=400, detail="Query param 'q' must be a non-empty prefix (e.g. q=wea)")
     cache = _get_cache()
     cached = cache.get(prefix)
     if cached is not None:
