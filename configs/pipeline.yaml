@@ -1,0 +1,21 @@
+# Click logs pipeline: raw logs -> features + trie vocabulary
+input:
+  path: data/raw/click_logs.csv  # run from repo root
+  # CSV columns: query, clicked_suggestion, position, timestamp (ISO or unix)
+  query_col: query
+  clicked_col: clicked_suggestion
+  position_col: position
+  timestamp_col: timestamp
+
+output:
+  features_path: data/processed/features.parquet
+  vocabulary_path: data/processed/vocabulary.parquet  # query -> stats for trie
+  stats_path: data/processed/query_stats.parquet
+
+feature_options:
+  time_decay_days: 36000
+  min_queries_for_trie: 2
+  top_vocabulary_size: 50000
+  # Negative sampling for ML: N random non-clicked suggestions per positive (so target has 0s and 1s)
+  neg_per_pos: 1
+  random_state: 42

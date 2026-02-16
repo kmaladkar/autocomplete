@@ -1,0 +1,14 @@
+feature_columns:
+- query_len
+- suggestion_len
+- prefix_match_len
+- position
+- clicked_query_count
+- clicked_sum_position
+- clicked_mean_position
+- clicked_ctr_approx
+- prefix_query_count
+- prefix_sum_position
+- prefix_mean_position
+- prefix_ctr_approx
+target_column: clicked

@@ -1,0 +1,19 @@
+# API / service config
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+  prefix: autocomplete
+  cache_ttl_seconds: 36000
+  trie_key_prefix: trie
+
+# Path to vocabulary parquet (used by load_trie script and optionally by API)
+vocabulary_path: data/processed/vocabulary.parquet
+
+model:
+  path: models/model.joblib
+  metadata_path: models/metadata.yaml
+
+suggest:
+  default_limit: 10
+  max_limit: 20

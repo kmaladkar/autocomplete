@@ -1,0 +1,12 @@
+# Train ranking model on pipeline features
+train_data_path: data/processed/features.parquet
+model_output_path: models
+target_column: clicked  # or ctr, score
+feature_columns: null   # null = all except target
+model_type: sklearn
+model_params:
+  n_estimators: 100
+  max_depth: 12
+  random_state: 42
+validation_split: 0.2
+random_state: 42
