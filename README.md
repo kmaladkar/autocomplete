@@ -23,9 +23,9 @@ flowchart TB
     end
 
     subgraph ingest["Ingest & feature pipeline"]
-        RAW[(data/raw\nclick_logs.csv)]
+        RAW[("data/raw<br>click_logs.csv")]
         LOADER[ClickLogsLoader]
-        ENG[FeatureEngineer\nbuild_query_stats\nbuild_features + neg sampling\nfilter_vocabulary]
+        ENG["FeatureEngineer<br>build_query_stats, build_features + neg sampling, filter_vocabulary"]
         FEAT[(features.parquet)]
         STATS[(query_stats.parquet)]
         VOCAB[(vocabulary.parquet)]
@@ -39,9 +39,9 @@ flowchart TB
     end
 
     subgraph train["Training & trie load"]
-        TP[TrainingPipeline\ntrain_test_split → RandomForest\njoblib.dump + metadata.yaml]
-        MOD[(models\nmodel.joblib\nmetadata.yaml)]
-        LT[run_load_trie\nvocabulary.parquet → Redis]
+        TP["TrainingPipeline<br>train_test_split → RandomForest<br>joblib.dump + metadata.yaml"]
+        MOD[("models<br>model.joblib, metadata.yaml")]
+        LT["run_load_trie<br>vocabulary.parquet → Redis"]
         FEAT --> TP
         STATS --> TP
         TP --> MOD
@@ -49,8 +49,8 @@ flowchart TB
     end
 
     subgraph redis["Redis"]
-        TRIE["Trie\nautocomplete:trie:node:path → SET\nautocomplete:trie:children:path → SET"]
-        CACHE["Cache\nautocomplete:cache:prefix → JSON · TTL"]
+        TRIE["Trie: trie:node:path → SET, trie:children:path → SET"]
+        CACHE["Cache: cache:prefix → JSON · TTL"]
         LT --> TRIE
     end
 
@@ -63,7 +63,7 @@ flowchart TB
         API -->|return cached| REQ
         API -->|miss| TRIE
         TRIE -->|candidates| API
-        API --> SCORE[Scorer\nscore_candidates\nmodel + query_stats]
+        API --> SCORE["Scorer<br>score_candidates, model + query_stats"]
         SCORE --> MOD
         SCORE --> STATS
         SCORE --> API
